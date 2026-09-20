@@ -1,1542 +1,864 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shabd Spy</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0a0912;
-            --panel: #161320;
-            --panel-2: #1e1a2c;
-            --panel-border: rgba(255, 255, 255, 0.08);
-            --line: rgba(255, 255, 255, 0.09);
-            --text: #f5f3fa;
-            --text-dim: #9891ae;
-            --amber: #f2b23a;
-            --amber-2: #ffd97a;
-            --amber-shadow: rgba(242, 178, 58, 0.35);
-            --rose: #ff4d6d;
-            --rose-shadow: rgba(255, 77, 109, 0.35);
-            --mint: #34d399;
-            --font-display: 'Archivo Black', 'Arial Black', sans-serif;
-            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --ease: cubic-bezier(.22, .9, .32, 1);
-            --ease-out-back: cubic-bezier(.34, 1.56, .64, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-        }
-
-        body {
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--font-body);
-            overscroll-behavior: none;
-            position: relative;
-            isolation: isolate;
-        }
-
-        /* ---------- Ambient background ---------- */
-        .ambient {
-            position: fixed;
-            inset: 0;
-            z-index: -2;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(60px);
-            opacity: .32;
-        }
-
-        .blob-1 {
-            width: 340px;
-            height: 340px;
-            left: -90px;
-            top: -100px;
-            background: var(--amber);
-            animation: drift1 22s ease-in-out infinite;
-        }
-
-        .blob-2 {
-            width: 300px;
-            height: 300px;
-            right: -100px;
-            top: 40%;
-            background: var(--rose);
-            animation: drift2 26s ease-in-out infinite;
-        }
-
-        .blob-3 {
-            width: 280px;
-            height: 280px;
-            left: 10%;
-            bottom: -140px;
-            background: #5b4bd6;
-            opacity: .22;
-            animation: drift3 30s ease-in-out infinite;
-        }
-
-        @keyframes drift1 {
-
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            50% {
-                transform: translate(30px, 40px) scale(1.15);
-            }
-        }
-
-        @keyframes drift2 {
-
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            50% {
-                transform: translate(-35px, -25px) scale(1.1);
-            }
-        }
-
-        @keyframes drift3 {
-
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            50% {
-                transform: translate(20px, -30px) scale(1.12);
-            }
-        }
-
-        .grain {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            pointer-events: none;
-            opacity: .05;
-            mix-blend-mode: overlay;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .blob {
-                animation: none !important;
-            }
-        }
-
-        .app {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            max-width: 480px;
-            margin: 0 auto;
-            width: 100%;
-            min-height: 100vh;
-            min-height: 100dvh;
-            padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
-        }
-
-        .screen {
-            display: none;
-            flex-direction: column;
-            flex: 1;
-            padding: 26px 24px 22px;
-        }
-
-        .screen.active {
-            display: flex;
-            animation: screenIn .38s var(--ease);
-        }
-
-        @keyframes screenIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px) scale(.985);
-                filter: blur(4px);
-            }
-
-            to {
-                opacity: 1;
-                transform: none;
-                filter: blur(0);
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .screen.active {
-                animation: none;
-            }
-        }
-
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 34px;
-        }
-
-        .progress {
-            font-size: 12.5px;
-            color: var(--text-dim);
-            font-weight: 700;
-            letter-spacing: .03em;
-        }
-
-        .close-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: 1px solid var(--panel-border);
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--text-dim);
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background .15s var(--ease), transform .15s var(--ease);
-        }
-
-        .close-btn:active {
-            background: rgba(255, 255, 255, 0.1);
-            transform: scale(.9);
-        }
-
-        .dots {
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-            margin: 14px 0 2px;
-        }
-
-        .dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.14);
-            transition: background .25s var(--ease), transform .25s var(--ease), width .25s var(--ease);
-        }
-
-        .dot.done {
-            background: var(--mint);
-        }
-
-        .dot.current {
-            background: var(--amber);
-            width: 18px;
-            border-radius: 5px;
-        }
-
-        .spacer-top {
-            flex: 1;
-            min-height: 6px;
-        }
-
-        .spacer-bottom {
-            flex: 1.3;
-            min-height: 10px;
-        }
-
-        /* ---------- Setup ---------- */
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-            margin-top: 4px;
-        }
-
-        .brand-mark {
-            font-size: 36px;
-            line-height: 1;
-            animation: float 4.5s ease-in-out infinite;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0) rotate(0);
-            }
-
-            50% {
-                transform: translateY(-5px) rotate(-4deg);
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .brand-mark {
-                animation: none;
-            }
-        }
-
-        .brand h1 {
-            font-family: var(--font-display);
-            font-size: 31px;
-            line-height: 1;
-            margin: 0;
-            letter-spacing: .01em;
-        }
-
-        .brand h1 .hl {
-            background: linear-gradient(120deg, var(--amber), var(--amber-2));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .tagline {
-            margin: 11px 0 0;
-            color: var(--text-dim);
-            font-size: 15px;
-            line-height: 1.55;
-            max-width: 34ch;
-        }
-
-        .reference {
-            margin-top: 7px;
-            font-size: 12.5px;
-            color: #726d8c;
-        }
-
-        .setup-card {
-            margin-top: 26px;
-            background: linear-gradient(165deg, var(--panel-2), var(--panel));
-            border: 1px solid var(--panel-border);
-            border-radius: 22px;
-            padding: 24px 22px;
-            box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .65);
-        }
-
-        .setup-label {
-            font-size: 13px;
-            color: var(--text-dim);
-            font-weight: 700;
-            margin-bottom: 14px;
-        }
-
-        .stepper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 22px;
-        }
-
-        .stepper button {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            border: 1px solid var(--panel-border);
-            background: var(--panel-2);
-            color: var(--text);
-            font-size: 24px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform .12s var(--ease), background .12s var(--ease);
-        }
-
-        .stepper button:active {
-            background: #2b2544;
-            transform: scale(.9);
-        }
-
-        .stepper-count {
-            font-family: var(--font-display);
-            font-size: 52px;
-            min-width: 76px;
-            text-align: center;
-            transition: transform .18s var(--ease-out-back);
-        }
-
-        .stepper-count.bump {
-            transform: scale(1.18);
-        }
-
-        .stepper-hint {
-            text-align: center;
-            margin-top: 12px;
-            color: var(--text-dim);
-            font-size: 12.5px;
-        }
-
-        .howto {
-            margin-top: 16px;
-            border-top: 1px dashed var(--panel-border);
-            padding-top: 16px;
-        }
-
-        .howto summary {
-            cursor: pointer;
-            font-size: 13.5px;
-            font-weight: 700;
-            color: var(--text-dim);
-            list-style: none;
-        }
-
-        .howto summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .howto summary:before {
-            content: "▸  ";
-            color: var(--amber);
-        }
-
-        .howto[open] summary:before {
-            content: "▾  ";
-        }
-
-        .howto p {
-            font-size: 13.5px;
-            line-height: 1.65;
-            color: var(--text-dim);
-            margin: 10px 0 0;
-        }
-
-        .primary-btn {
-            position: relative;
-            overflow: hidden;
-            margin-top: 22px;
-            width: 100%;
-            border: none;
-            border-radius: 16px;
-            background: linear-gradient(135deg, var(--amber), #e8a020);
-            color: #1c1305;
-            font-family: var(--font-body);
-            font-weight: 800;
-            font-size: 16.5px;
-            padding: 17px 20px;
-            cursor: pointer;
-            box-shadow: 0 14px 30px -12px var(--amber-shadow);
-            transition: transform .14s var(--ease), box-shadow .14s var(--ease);
-            animation: pulseGlow 3s ease-in-out infinite;
-        }
-
-        .primary-btn:active {
-            transform: scale(.97);
-            box-shadow: 0 8px 18px -10px var(--amber-shadow);
-        }
-
-        @keyframes pulseGlow {
-
-            0%,
-            100% {
-                box-shadow: 0 14px 30px -12px var(--amber-shadow);
-            }
-
-            50% {
-                box-shadow: 0 14px 34px -8px var(--amber-shadow);
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .primary-btn {
-                animation: none;
-            }
-        }
-
-        .ghost-btn {
-            width: 100%;
-            border-radius: 16px;
-            border: 1px solid var(--panel-border);
-            background: transparent;
-            color: var(--text);
-            font-family: var(--font-body);
-            font-weight: 700;
-            font-size: 15px;
-            padding: 15px 20px;
-            cursor: pointer;
-            margin-top: 12px;
-            transition: background .14s var(--ease), transform .14s var(--ease);
-        }
-
-        .ghost-btn:active {
-            background: rgba(255, 255, 255, 0.06);
-            transform: scale(.97);
-        }
-
-        /* ---------- Pass screen ---------- */
-        .pass-wrap {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 18px;
-        }
-
-        .pass-icon {
-            font-size: 46px;
-            animation: swing 1.8s var(--ease) infinite;
-        }
-
-        @keyframes swing {
-
-            0%,
-            100% {
-                transform: rotate(0);
-            }
-
-            25% {
-                transform: rotate(-8deg);
-            }
-
-            75% {
-                transform: rotate(8deg);
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .pass-icon {
-                animation: none;
-            }
-        }
-
-        .pass-wrap h2 {
-            font-family: var(--font-display);
-            font-size: 25px;
-            margin: 0;
-            line-height: 1.28;
-        }
-
-        .pass-wrap h2 em {
-            font-style: normal;
-            color: var(--amber);
-        }
-
-        .pass-wrap p {
-            color: var(--text-dim);
-            font-size: 14.5px;
-            max-width: 30ch;
-            margin: 0;
-            line-height: 1.5;
-        }
-
-        /* ---------- Reveal screen ---------- */
-        .reveal-wrap {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .reveal-heading {
-            text-align: center;
-        }
-
-        .reveal-heading .who {
-            font-size: 12.5px;
-            font-weight: 700;
-            letter-spacing: .05em;
-            color: var(--text-dim);
-        }
-
-        .reveal-heading h2 {
-            font-family: var(--font-display);
-            font-size: 23px;
-            margin: 6px 0 0;
-        }
-
-        .word-stage {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1.35/1;
-            max-height: 230px;
-            border-radius: 24px;
-            background: radial-gradient(circle at 30% 20%, #2a2340, var(--panel));
-            border: 1px solid var(--panel-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            cursor: pointer;
-            box-shadow: 0 20px 44px -24px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(255, 255, 255, .02);
-        }
-
-        .word-text {
-            font-family: var(--font-display);
-            font-size: clamp(28px, 8vw, 40px);
-            text-align: center;
-            padding: 0 16px;
-            text-shadow: 0 0 0 rgba(242, 178, 58, 0);
-            transition: text-shadow .3s var(--ease);
-        }
-
-        .word-stage.revealing .word-text {
-            text-shadow: 0 0 28px rgba(242, 178, 58, .45);
-        }
-
-        .word-cover {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: radial-gradient(circle at 30% 20%, #2a2340, var(--panel));
-            -webkit-mask-image: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), transparent var(--r, 0px), black calc(var(--r, 0px) + 1px));
-            mask-image: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), transparent var(--r, 0px), black calc(var(--r, 0px) + 1px));
-        }
-
-        .cover-icon {
-            font-size: 28px;
-            opacity: .9;
-        }
-
-        .cover-label {
-            font-size: 13.5px;
-            font-weight: 600;
-            color: var(--text-dim);
-            text-align: center;
-            padding: 0 20px;
-        }
-
-        .got-it-btn {
-            width: 100%;
-            border: none;
-            border-radius: 16px;
-            background: var(--panel-2);
-            border: 1px solid var(--panel-border);
-            color: var(--text);
-            font-weight: 800;
-            font-size: 16px;
-            padding: 16px 20px;
-            cursor: pointer;
-            opacity: 0;
-            transform: translateY(10px) scale(.96);
-            pointer-events: none;
-            transition: opacity .3s var(--ease-out-back), transform .3s var(--ease-out-back), background .14s var(--ease);
-        }
-
-        .got-it-btn.visible {
-            opacity: 1;
-            transform: none;
-            pointer-events: auto;
-            border-color: rgba(52, 211, 153, .35);
-        }
-
-        .got-it-btn:active {
-            background: #2c2645;
-            transform: scale(.96);
-        }
-
-        /* ---------- Hint start screen ---------- */
-        .hint-wrap {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 16px;
-        }
-
-        .starter-label {
-            font-size: 12.5px;
-            color: var(--text-dim);
-            font-weight: 700;
-            letter-spacing: .05em;
-        }
-
-        .starter-badge {
-            font-family: var(--font-display);
-            font-size: 58px;
-            color: var(--amber);
-            line-height: 1;
-            position: relative;
-            padding: 6px 22px;
-        }
-
-        .starter-badge::after {
-            content: "";
-            position: absolute;
-            inset: -10px;
-            border-radius: 50%;
-            border: 1.5px solid rgba(242, 178, 58, .3);
-            animation: ring 2.4s var(--ease) infinite;
-        }
-
-        @keyframes ring {
-            0% {
-                transform: scale(.85);
-                opacity: .9;
-            }
-
-            100% {
-                transform: scale(1.35);
-                opacity: 0;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .starter-badge::after {
-                animation: none;
-                display: none;
-            }
-        }
-
-        .hint-wrap h2 {
-            font-family: var(--font-display);
-            font-size: 22px;
-            margin: 6px 0 0;
-            line-height: 1.3;
-        }
-
-        .hint-wrap p {
-            color: var(--text-dim);
-            font-size: 14px;
-            max-width: 32ch;
-            line-height: 1.6;
-            margin: 0;
-        }
-
-        .rules-mini {
-            margin-top: 6px;
-            text-align: left;
-            background: var(--panel);
-            border: 1px solid var(--panel-border);
-            border-radius: 16px;
-            padding: 16px 18px;
-            font-size: 13.5px;
-            color: var(--text-dim);
-            line-height: 1.7;
-        }
-
-        .rules-mini b {
-            color: var(--text);
-        }
-
-        /* ---------- Spy reveal screen ---------- */
-        .spy-wrap {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 14px;
-            position: relative;
-        }
-
-        .spy-tag {
-            font-size: 12.5px;
-            font-weight: 700;
-            letter-spacing: .06em;
-            color: var(--rose);
-        }
-
-        .spy-num {
-            font-family: var(--font-display);
-            font-size: 64px;
-            color: var(--rose);
-            line-height: 1;
-            text-shadow: 0 0 34px var(--rose-shadow);
-        }
-
-        .spy-num.stamp {
-            animation: stampIn .55s var(--ease-out-back);
-        }
-
-        @keyframes stampIn {
-            0% {
-                transform: scale(2.1) rotate(-6deg);
-                opacity: 0;
-            }
-
-            60% {
-                transform: scale(.94) rotate(2deg);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1) rotate(0);
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .spy-num.stamp {
-                animation: none;
-            }
-        }
-
-        .spy-sub {
-            color: var(--text-dim);
-            font-size: 14.5px;
-            margin: 0;
-        }
-
-        .word-compare {
-            width: 100%;
-            display: flex;
-            gap: 10px;
-            margin-top: 8px;
-        }
-
-        .word-chip {
-            flex: 1;
-            border-radius: 14px;
-            border: 1px solid var(--panel-border);
-            padding: 14px 10px;
-            background: var(--panel);
-            opacity: 0;
-            transform: translateY(8px);
-            animation: chipIn .4s var(--ease) forwards;
-        }
-
-        .word-chip.majority {
-            animation-delay: .15s;
-        }
-
-        .word-chip.spy {
-            animation-delay: .28s;
-        }
-
-        @keyframes chipIn {
-            to {
-                opacity: 1;
-                transform: none;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .word-chip {
-                animation: none;
-                opacity: 1;
-                transform: none;
-            }
-        }
-
-        .word-chip .lab {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: .04em;
-            color: var(--text-dim);
-            margin-bottom: 6px;
-        }
-
-        .word-chip .val {
-            font-family: var(--font-display);
-            font-size: 17px;
-        }
-
-        .word-chip.majority .lab {
-            color: var(--mint);
-        }
-
-        .word-chip.spy .lab {
-            color: var(--rose);
-        }
-
-        .flash {
-            position: fixed;
-            inset: 0;
-            background: var(--rose);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 60;
-        }
-
-        .flash.go {
-            animation: flashPop .5s ease-out;
-        }
-
-        @keyframes flashPop {
-            0% {
-                opacity: 0;
-            }
-
-            12% {
-                opacity: .28;
-            }
-
-            100% {
-                opacity: 0;
-            }
-        }
-
-        .spark {
-            position: absolute;
-            left: 50%;
-            top: 38%;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            pointer-events: none;
-            opacity: 0;
-        }
-
-        .spark.go {
-            animation: sparkFly .7s var(--ease) forwards;
-        }
-
-        @keyframes sparkFly {
-            0% {
-                opacity: 1;
-                transform: translate(-50%, -50%) translate(0, 0) scale(1);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(.3);
-            }
-        }
-
-        /* ---------- Confirm overlay ---------- */
-        .confirm-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 70;
-            background: rgba(6, 5, 10, 0.72);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .18s var(--ease);
-        }
-
-        .confirm-overlay.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .confirm-card {
-            width: 100%;
-            max-width: 340px;
-            background: linear-gradient(165deg, var(--panel-2), var(--panel));
-            border: 1px solid var(--panel-border);
-            border-radius: 20px;
-            padding: 22px 20px;
-            box-shadow: 0 24px 50px -20px rgba(0, 0, 0, .7);
-            transform: translateY(10px) scale(.97);
-            transition: transform .2s var(--ease-out-back);
-        }
-
-        .confirm-overlay.open .confirm-card {
-            transform: none;
-        }
-
-        .confirm-card p {
-            margin: 0 0 18px;
-            font-size: 15.5px;
-            font-weight: 600;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        .confirm-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .confirm-actions .ghost-btn,
-        .confirm-actions .danger-btn {
-            margin-top: 0;
-        }
-
-        .danger-btn {
-            flex: 1;
-            border: none;
-            border-radius: 16px;
-            background: linear-gradient(135deg, var(--rose), #d43a56);
-            color: #2a0710;
-            font-weight: 800;
-            font-size: 15px;
-            padding: 15px 16px;
-            cursor: pointer;
-            box-shadow: 0 12px 24px -12px var(--rose-shadow);
-            transition: transform .14s var(--ease);
-        }
-
-        .danger-btn:active {
-            transform: scale(.96);
-        }
-
-        .confirm-actions .ghost-btn {
-            flex: 1;
-        }
-
-        /* ---------- Watermark ---------- */
-        .watermark {
-            position: fixed;
-            right: 10px;
-            bottom: 8px;
-            font-size: 10.5px;
-            color: rgba(255, 255, 255, 0.26);
-            font-weight: 600;
-            letter-spacing: .02em;
-            pointer-events: none;
-            z-index: 50;
-        }
-
-        @media (max-width:340px) {
-            .brand h1 {
-                font-size: 26px;
-            }
-
-            .stepper-count {
-                font-size: 44px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Shabd Spy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0912;
+    --panel:#161320;
+    --panel-2:#1e1a2c;
+    --panel-border:rgba(255,255,255,0.08);
+    --line:rgba(255,255,255,0.09);
+    --text:#f5f3fa;
+    --text-dim:#9891ae;
+    --amber:#f2b23a;
+    --amber-2:#ffd97a;
+    --amber-shadow:rgba(242,178,58,0.35);
+    --rose:#ff4d6d;
+    --rose-shadow:rgba(255,77,109,0.35);
+    --mint:#34d399;
+    --font-display:'Archivo Black', 'Arial Black', sans-serif;
+    --font-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --ease:cubic-bezier(.22,.9,.32,1);
+    --ease-out-back:cubic-bezier(.34,1.56,.64,1);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+
+  html,body{margin:0; padding:0; height:100%;}
+
+  body{
+    min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    overscroll-behavior:none;
+    position:relative;
+    isolation:isolate;
+  }
+
+  /* ---------- Ambient background ---------- */
+  .ambient{
+    position:fixed; inset:0; z-index:-2; overflow:hidden; pointer-events:none;
+  }
+  .blob{
+    position:absolute; border-radius:50%; filter:blur(60px); opacity:.32;
+  }
+  .blob-1{ width:340px; height:340px; left:-90px; top:-100px; background:var(--amber); animation:drift1 22s ease-in-out infinite; }
+  .blob-2{ width:300px; height:300px; right:-100px; top:40%; background:var(--rose); animation:drift2 26s ease-in-out infinite; }
+  .blob-3{ width:280px; height:280px; left:10%; bottom:-140px; background:#5b4bd6; opacity:.22; animation:drift3 30s ease-in-out infinite; }
+
+  @keyframes drift1{ 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(30px,40px) scale(1.15);} }
+  @keyframes drift2{ 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-35px,-25px) scale(1.1);} }
+  @keyframes drift3{ 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(20px,-30px) scale(1.12);} }
+
+  .grain{
+    position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .blob{animation:none !important;}
+  }
+
+  .app{
+    flex:1; display:flex; flex-direction:column; position:relative;
+    max-width:480px; margin:0 auto; width:100%;
+    min-height:100vh; min-height:100dvh;
+    padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
+  }
+
+  .screen{
+    display:none; flex-direction:column; flex:1;
+    padding:26px 24px 22px;
+  }
+  .screen.active{display:flex; animation:screenIn .38s var(--ease);}
+
+  @keyframes screenIn{
+    from{opacity:0; transform:translateY(10px) scale(.985); filter:blur(4px);}
+    to{opacity:1; transform:none; filter:blur(0);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .screen.active{animation:none;}
+  }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; min-height:34px; }
+
+  .progress{ font-size:12.5px; color:var(--text-dim); font-weight:700; letter-spacing:.03em; }
+
+  .close-btn{
+    width:34px; height:34px; border-radius:50%;
+    border:1px solid var(--panel-border);
+    background:rgba(255,255,255,0.04);
+    color:var(--text-dim); font-size:15px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:background .15s var(--ease), transform .15s var(--ease);
+  }
+  .close-btn:active{background:rgba(255,255,255,0.1); transform:scale(.9);}
+
+  .dots{ display:flex; gap:6px; justify-content:center; margin:14px 0 2px; }
+  .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:rgba(255,255,255,0.14);
+    transition:background .25s var(--ease), transform .25s var(--ease), width .25s var(--ease);
+  }
+  .dot.done{background:var(--mint);}
+  .dot.current{background:var(--amber); width:18px; border-radius:5px;}
+
+  .spacer-top{flex:1; min-height:6px;}
+  .spacer-bottom{flex:1.3; min-height:10px;}
+
+  /* ---------- Setup ---------- */
+  .brand{ display:flex; align-items:center; gap:13px; margin-top:4px; }
+  .brand-mark{ font-size:36px; line-height:1; animation:float 4.5s ease-in-out infinite; }
+  @keyframes float{ 0%,100%{transform:translateY(0) rotate(0);} 50%{transform:translateY(-5px) rotate(-4deg);} }
+  @media (prefers-reduced-motion: reduce){ .brand-mark{animation:none;} }
+
+  .brand h1{ font-family:var(--font-display); font-size:31px; line-height:1; margin:0; letter-spacing:.01em; }
+  .brand h1 .hl{
+    background:linear-gradient(120deg, var(--amber), var(--amber-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .tagline{ margin:11px 0 0; color:var(--text-dim); font-size:15px; line-height:1.55; max-width:34ch; }
+  .reference{ margin-top:7px; font-size:12.5px; color:#726d8c; }
+
+  .setup-card{
+    margin-top:26px;
+    background:linear-gradient(165deg, var(--panel-2), var(--panel));
+    border:1px solid var(--panel-border);
+    border-radius:22px; padding:24px 22px;
+    box-shadow:0 18px 40px -22px rgba(0,0,0,.65);
+  }
+  .setup-label{ font-size:13px; color:var(--text-dim); font-weight:700; margin-bottom:14px; }
+  .stepper{ display:flex; align-items:center; justify-content:center; gap:22px; }
+  .stepper button{
+    width:52px; height:52px; border-radius:16px;
+    border:1px solid var(--panel-border); background:var(--panel-2);
+    color:var(--text); font-size:24px; font-weight:700; cursor:pointer;
+    transition:transform .12s var(--ease), background .12s var(--ease);
+  }
+  .stepper button:active{ background:#2b2544; transform:scale(.9); }
+  .stepper-count{
+    font-family:var(--font-display); font-size:52px; min-width:76px; text-align:center;
+    transition:transform .18s var(--ease-out-back);
+  }
+  .stepper-count.bump{ transform:scale(1.18); }
+  .stepper-hint{ text-align:center; margin-top:12px; color:var(--text-dim); font-size:12.5px; }
+
+  .howto{ margin-top:16px; border-top:1px dashed var(--panel-border); padding-top:16px; }
+  .howto summary{ cursor:pointer; font-size:13.5px; font-weight:700; color:var(--text-dim); list-style:none; }
+  .howto summary::-webkit-details-marker{display:none;}
+  .howto summary:before{content:"▸  "; color:var(--amber);}
+  .howto[open] summary:before{content:"▾  ";}
+  .howto p{ font-size:13.5px; line-height:1.65; color:var(--text-dim); margin:10px 0 0; }
+
+  .primary-btn{
+    position:relative; overflow:hidden;
+    margin-top:22px; width:100%; border:none; border-radius:16px;
+    background:linear-gradient(135deg, var(--amber), #e8a020);
+    color:#1c1305; font-family:var(--font-body); font-weight:800; font-size:16.5px;
+    padding:17px 20px; cursor:pointer;
+    box-shadow:0 14px 30px -12px var(--amber-shadow);
+    transition:transform .14s var(--ease), box-shadow .14s var(--ease);
+    animation:pulseGlow 3s ease-in-out infinite;
+  }
+  .primary-btn:active{ transform:scale(.97); box-shadow:0 8px 18px -10px var(--amber-shadow); }
+  @keyframes pulseGlow{
+    0%,100%{ box-shadow:0 14px 30px -12px var(--amber-shadow); }
+    50%{ box-shadow:0 14px 34px -8px var(--amber-shadow); }
+  }
+  @media (prefers-reduced-motion: reduce){ .primary-btn{animation:none;} }
+
+  .ghost-btn{
+    width:100%; border-radius:16px; border:1px solid var(--panel-border);
+    background:transparent; color:var(--text); font-family:var(--font-body);
+    font-weight:700; font-size:15px; padding:15px 20px; cursor:pointer; margin-top:12px;
+    transition:background .14s var(--ease), transform .14s var(--ease);
+  }
+  .ghost-btn:active{ background:rgba(255,255,255,0.06); transform:scale(.97); }
+
+  /* ---------- Pass screen ---------- */
+  .pass-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:18px; }
+  .pass-icon{ font-size:46px; animation:swing 1.8s var(--ease) infinite; }
+  @keyframes swing{ 0%,100%{transform:rotate(0);} 25%{transform:rotate(-8deg);} 75%{transform:rotate(8deg);} }
+  @media (prefers-reduced-motion: reduce){ .pass-icon{animation:none;} }
+  .pass-wrap h2{ font-family:var(--font-display); font-size:25px; margin:0; line-height:1.28; }
+  .pass-wrap h2 em{ font-style:normal; color:var(--amber); }
+  .pass-wrap p{ color:var(--text-dim); font-size:14.5px; max-width:30ch; margin:0; line-height:1.5; }
+
+  /* ---------- Reveal screen ---------- */
+  .reveal-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; }
+  .reveal-heading{ text-align:center; }
+  .reveal-heading .who{ font-size:12.5px; font-weight:700; letter-spacing:.05em; color:var(--text-dim); }
+  .reveal-heading h2{ font-family:var(--font-display); font-size:23px; margin:6px 0 0; }
+
+  .word-stage{
+    position:relative; width:100%; aspect-ratio:1.35/1; max-height:230px;
+    border-radius:24px; background:radial-gradient(circle at 30% 20%, #2a2340, var(--panel));
+    border:1px solid var(--panel-border);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+    cursor:pointer;
+    box-shadow:0 20px 44px -24px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.02);
+  }
+  .word-text{
+    font-family:var(--font-display); font-size:clamp(28px, 8vw, 40px); text-align:center; padding:0 16px;
+    text-shadow:0 0 0 rgba(242,178,58,0);
+    transition:text-shadow .3s var(--ease);
+  }
+  .word-stage.revealing .word-text{ text-shadow:0 0 28px rgba(242,178,58,.45); }
+
+  .word-cover{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    background:radial-gradient(circle at 30% 20%, #2a2340, var(--panel));
+    -webkit-mask-image:radial-gradient(circle at var(--mx,50%) var(--my,50%), transparent var(--r,0px), black calc(var(--r,0px) + 1px));
+    mask-image:radial-gradient(circle at var(--mx,50%) var(--my,50%), transparent var(--r,0px), black calc(var(--r,0px) + 1px));
+  }
+  .cover-icon{ font-size:28px; opacity:.9; }
+  .cover-label{ font-size:13.5px; font-weight:600; color:var(--text-dim); text-align:center; padding:0 20px; }
+
+  .got-it-btn{
+    width:100%; border:none; border-radius:16px;
+    background:var(--panel-2); border:1px solid var(--panel-border);
+    color:var(--text); font-weight:800; font-size:16px; padding:16px 20px; cursor:pointer;
+    opacity:0; transform:translateY(10px) scale(.96); pointer-events:none;
+    transition:opacity .3s var(--ease-out-back), transform .3s var(--ease-out-back), background .14s var(--ease);
+  }
+  .got-it-btn.visible{ opacity:1; transform:none; pointer-events:auto; border-color:rgba(52,211,153,.35); }
+  .got-it-btn:active{ background:#2c2645; transform:scale(.96); }
+
+  /* ---------- Hint start screen ---------- */
+  .hint-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px; }
+  .starter-label{ font-size:12.5px; color:var(--text-dim); font-weight:700; letter-spacing:.05em; }
+  .starter-badge{
+    font-family:var(--font-display); font-size:58px; color:var(--amber); line-height:1;
+    position:relative; padding:6px 22px;
+  }
+  .starter-badge::after{
+    content:""; position:absolute; inset:-10px; border-radius:50%;
+    border:1.5px solid rgba(242,178,58,.3);
+    animation:ring 2.4s var(--ease) infinite;
+  }
+  @keyframes ring{ 0%{transform:scale(.85); opacity:.9;} 100%{transform:scale(1.35); opacity:0;} }
+  @media (prefers-reduced-motion: reduce){ .starter-badge::after{animation:none; display:none;} }
+
+  .hint-wrap h2{ font-family:var(--font-display); font-size:22px; margin:6px 0 0; line-height:1.3; }
+  .hint-wrap p{ color:var(--text-dim); font-size:14px; max-width:32ch; line-height:1.6; margin:0; }
+  .rules-mini{
+    margin-top:6px; text-align:left; background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:16px; padding:16px 18px; font-size:13.5px; color:var(--text-dim); line-height:1.7;
+  }
+  .rules-mini b{color:var(--text);}
+
+  /* ---------- Spy reveal screen ---------- */
+  .spy-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; position:relative; }
+  .spy-tag{ font-size:12.5px; font-weight:700; letter-spacing:.06em; color:var(--rose); }
+  .spy-num{
+    font-family:var(--font-display); font-size:64px; color:var(--rose); line-height:1;
+    text-shadow:0 0 34px var(--rose-shadow);
+  }
+  .spy-num.stamp{ animation:stampIn .55s var(--ease-out-back); }
+  @keyframes stampIn{
+    0%{ transform:scale(2.1) rotate(-6deg); opacity:0; }
+    60%{ transform:scale(.94) rotate(2deg); opacity:1; }
+    100%{ transform:scale(1) rotate(0); }
+  }
+  @media (prefers-reduced-motion: reduce){ .spy-num.stamp{animation:none;} }
+
+  .spy-sub{ color:var(--text-dim); font-size:14.5px; margin:0; }
+
+  .word-compare{ width:100%; display:flex; gap:10px; margin-top:8px; }
+  .word-chip{
+    flex:1; border-radius:14px; border:1px solid var(--panel-border); padding:14px 10px; background:var(--panel);
+    opacity:0; transform:translateY(8px);
+    animation:chipIn .4s var(--ease) forwards;
+  }
+  .word-chip.majority{ animation-delay:.15s; }
+  .word-chip.spy{ animation-delay:.28s; }
+  @keyframes chipIn{ to{opacity:1; transform:none;} }
+  @media (prefers-reduced-motion: reduce){ .word-chip{animation:none; opacity:1; transform:none;} }
+  .word-chip .lab{ font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--text-dim); margin-bottom:6px; }
+  .word-chip .val{ font-family:var(--font-display); font-size:17px; }
+  .word-chip.majority .lab{color:var(--mint);}
+  .word-chip.spy .lab{color:var(--rose);}
+
+  .flash{
+    position:fixed; inset:0; background:var(--rose); opacity:0; pointer-events:none; z-index:60;
+  }
+  .flash.go{ animation:flashPop .5s ease-out; }
+  @keyframes flashPop{ 0%{opacity:0;} 12%{opacity:.28;} 100%{opacity:0;} }
+
+  .spark{
+    position:absolute; left:50%; top:38%; width:6px; height:6px; border-radius:50%;
+    pointer-events:none; opacity:0;
+  }
+  .spark.go{ animation:sparkFly .7s var(--ease) forwards; }
+  @keyframes sparkFly{
+    0%{ opacity:1; transform:translate(-50%,-50%) translate(0,0) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-50%) translate(var(--dx), var(--dy)) scale(.3); }
+  }
+
+  /* ---------- Confirm overlay ---------- */
+  .confirm-overlay{
+    position:fixed; inset:0; z-index:70;
+    background:rgba(6,5,10,0.72);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    opacity:0; pointer-events:none;
+    transition:opacity .18s var(--ease);
+  }
+  .confirm-overlay.open{ opacity:1; pointer-events:auto; }
+  .confirm-card{
+    width:100%; max-width:340px;
+    background:linear-gradient(165deg, var(--panel-2), var(--panel));
+    border:1px solid var(--panel-border);
+    border-radius:20px; padding:22px 20px;
+    box-shadow:0 24px 50px -20px rgba(0,0,0,.7);
+    transform:translateY(10px) scale(.97);
+    transition:transform .2s var(--ease-out-back);
+  }
+  .confirm-overlay.open .confirm-card{ transform:none; }
+  .confirm-card p{
+    margin:0 0 18px; font-size:15.5px; font-weight:600; text-align:center; line-height:1.5;
+  }
+  .confirm-actions{ display:flex; gap:10px; }
+  .confirm-actions .ghost-btn, .confirm-actions .danger-btn{ margin-top:0; }
+  .danger-btn{
+    flex:1; border:none; border-radius:16px;
+    background:linear-gradient(135deg, var(--rose), #d43a56);
+    color:#2a0710; font-weight:800; font-size:15px; padding:15px 16px; cursor:pointer;
+    box-shadow:0 12px 24px -12px var(--rose-shadow);
+    transition:transform .14s var(--ease);
+  }
+  .danger-btn:active{ transform:scale(.96); }
+  .confirm-actions .ghost-btn{ flex:1; }
+
+  /* ---------- Watermark ---------- */
+  .watermark{
+    position:fixed; right:10px; bottom:8px; font-size:10.5px; color:rgba(255,255,255,0.26);
+    font-weight:600; letter-spacing:.02em; pointer-events:none; z-index:50;
+  }
+
+  @media (max-width:340px){
+    .brand h1{font-size:26px;}
+    .stepper-count{font-size:44px;}
+  }
+</style>
 </head>
-
 <body>
 
-    <div class="ambient">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
+<div class="ambient">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+<div class="grain"></div>
+<div class="flash" id="flash"></div>
+
+<div class="app">
+
+  <!-- SETUP / HOME -->
+  <section class="screen active" data-screen="setup">
+    <div class="topbar"><div></div><div></div></div>
+    <div class="spacer-top" style="flex:0.3"></div>
+    <div class="brand">
+      <div class="brand-mark">🕵️</div>
+      <h1>SHABD <span class="hl">SPY</span></h1>
     </div>
-    <div class="grain"></div>
-    <div class="flash" id="flash"></div>
+    <p class="tagline">Everyone gets the same word. One player gets something a little different. Give clues, then catch the spy.</p>
+    <p class="reference">Inspired by party-game classics Spyfall &amp; Word Wolf.</p>
 
-    <div class="app">
+    <div class="setup-card">
+      <div class="setup-label">How many players?</div>
+      <div class="stepper">
+        <button type="button" id="minusBtn" aria-label="Decrease players">−</button>
+        <div class="stepper-count" id="playerCount">4</div>
+        <button type="button" id="plusBtn" aria-label="Increase players">+</button>
+      </div>
+      <div class="stepper-hint">3 to 10 players</div>
 
-        <!-- SETUP / HOME -->
-        <section class="screen active" data-screen="setup">
-            <div class="topbar">
-                <div></div>
-                <div></div>
-            </div>
-            <div class="spacer-top" style="flex:0.3"></div>
-            <div class="brand">
-                <div class="brand-mark">🕵️</div>
-                <h1>SHABD <span class="hl">SPY</span></h1>
-            </div>
-            <p class="tagline">Everyone gets the same word. One player gets something a little different. Give clues,
-                then catch the spy.</p>
-            <p class="reference">Inspired by party-game classics Spyfall &amp; Word Wolf.</p>
+      <details class="howto">
+        <summary>How to play</summary>
+        <p>The phone gets passed to each player in turn. Tap &amp; hold the box to see your word, let go and it hides again. Once everyone has seen their word, go around the group and each say one clue related to your word &mdash; without saying the word itself. Talk it over, then hit reveal to see who the spy was.</p>
+      </details>
 
-            <div class="setup-card">
-                <div class="setup-label">How many players?</div>
-                <div class="stepper">
-                    <button type="button" id="minusBtn" aria-label="Decrease players">−</button>
-                    <div class="stepper-count" id="playerCount">4</div>
-                    <button type="button" id="plusBtn" aria-label="Increase players">+</button>
-                </div>
-                <div class="stepper-hint">3 to 10 players</div>
-
-                <details class="howto">
-                    <summary>How to play</summary>
-                    <p>The phone gets passed to each player in turn. Tap &amp; hold the box to see your word, let go and
-                        it hides again. Once everyone has seen their word, go around the group and each say one clue
-                        related to your word &mdash; without saying the word itself. Talk it over, then hit reveal to
-                        see who the spy was.</p>
-                </details>
-
-                <button class="primary-btn" id="startBtn">Start Game</button>
-            </div>
-            <div class="spacer-bottom"></div>
-        </section>
-
-        <!-- PASS DEVICE -->
-        <section class="screen" data-screen="pass">
-            <div class="topbar">
-                <div class="progress" id="passProgress">Player 1 of 4</div>
-                <button class="close-btn" data-close aria-label="Close round">✕</button>
-            </div>
-            <div class="dots" id="passDots"></div>
-            <div class="pass-wrap">
-                <div class="pass-icon">📲</div>
-                <h2>Pass the phone to <em>Player <span id="passPlayerNum">1</span></em></h2>
-                <p>Everyone else, look away for a moment.</p>
-            </div>
-            <button class="primary-btn" id="passContinueBtn">I'm Player <span id="passPlayerNum2">1</span>,
-                Continue</button>
-        </section>
-
-        <!-- REVEAL WORD -->
-        <section class="screen" data-screen="reveal">
-            <div class="topbar">
-                <div class="progress" id="revealProgress">Player 1 of 4</div>
-                <button class="close-btn" data-close aria-label="Close round">✕</button>
-            </div>
-            <div class="dots" id="revealDots"></div>
-            <div class="reveal-wrap">
-                <div class="reveal-heading">
-                    <div class="who">PLAYER <span id="revealPlayerNum">1</span></div>
-                    <h2>See your word</h2>
-                </div>
-                <div class="word-stage" id="wordStage">
-                    <div class="word-text" id="wordText">MILK</div>
-                    <div class="word-cover" id="wordCover">
-                        <div class="cover-icon">👁️</div>
-                        <div class="cover-label">Tap &amp; hold below to reveal</div>
-                    </div>
-                </div>
-                <button class="got-it-btn" id="gotItBtn">Got it</button>
-            </div>
-        </section>
-
-        <!-- HINT START -->
-        <section class="screen" data-screen="hintStart">
-            <div class="topbar">
-                <div></div>
-                <button class="close-btn" data-close aria-label="Close round">✕</button>
-            </div>
-            <div class="hint-wrap">
-                <div class="starter-label">STARTS THE ROUND</div>
-                <div class="starter-badge">Player <span id="starterNum">1</span></div>
-                <h2>Goes first with a hint</h2>
-                <p>Each player says one word or short clue related to their word &mdash; without saying the word itself.
-                    Go around one by one.</p>
-                <div class="rules-mini">
-                    <b>Remember:</b> one player's word is slightly different. Listen to the clues, guess who sounds off
-                    &mdash; then vote!
-                </div>
-            </div>
-            <button class="primary-btn" id="revealSpyBtn">Reveal Spy</button>
-        </section>
-
-        <!-- SPY REVEAL -->
-        <section class="screen" data-screen="spyReveal">
-            <div class="topbar">
-                <div></div>
-                <button class="close-btn" data-close aria-label="Close round">✕</button>
-            </div>
-            <div class="spy-wrap" id="spyWrap">
-                <div class="spy-tag">WAS THE SPY</div>
-                <div class="spy-num" id="spyNum">Player <span id="spyPlayerNum">1</span></div>
-                <p class="spy-sub">Caught them? Here are both words.</p>
-                <div class="word-compare">
-                    <div class="word-chip majority">
-                        <div class="lab">MAJORITY</div>
-                        <div class="val" id="majorityWordDisplay">Milk</div>
-                    </div>
-                    <div class="word-chip spy">
-                        <div class="lab">SPY</div>
-                        <div class="val" id="spyWordDisplay">Water</div>
-                    </div>
-                </div>
-            </div>
-            <button class="primary-btn" id="playAgainBtn">Play Again</button>
-            <button class="ghost-btn" id="homeBtn">Home</button>
-        </section>
-
-        <div class="watermark">made by karnav</div>
-
+      <button class="primary-btn" id="startBtn">Start Game</button>
     </div>
+    <div class="spacer-bottom"></div>
+  </section>
 
-    <div class="confirm-overlay" id="confirmOverlay">
-        <div class="confirm-card">
-            <p>End this round and go home?</p>
-            <div class="confirm-actions">
-                <button class="ghost-btn" id="confirmCancel">Cancel</button>
-                <button class="danger-btn" id="confirmYes">End Round</button>
-            </div>
+  <!-- PASS DEVICE -->
+  <section class="screen" data-screen="pass">
+    <div class="topbar">
+      <div class="progress" id="passProgress">Player 1 of 4</div>
+      <button class="close-btn" data-close aria-label="Close round">✕</button>
+    </div>
+    <div class="dots" id="passDots"></div>
+    <div class="pass-wrap">
+      <div class="pass-icon">📲</div>
+      <h2>Pass the phone to <em>Player <span id="passPlayerNum">1</span></em></h2>
+      <p>Everyone else, look away for a moment.</p>
+    </div>
+    <button class="primary-btn" id="passContinueBtn">I'm Player <span id="passPlayerNum2">1</span>, Continue</button>
+  </section>
+
+  <!-- REVEAL WORD -->
+  <section class="screen" data-screen="reveal">
+    <div class="topbar">
+      <div class="progress" id="revealProgress">Player 1 of 4</div>
+      <button class="close-btn" data-close aria-label="Close round">✕</button>
+    </div>
+    <div class="dots" id="revealDots"></div>
+    <div class="reveal-wrap">
+      <div class="reveal-heading">
+        <div class="who">PLAYER <span id="revealPlayerNum">1</span></div>
+        <h2>See your word</h2>
+      </div>
+      <div class="word-stage" id="wordStage">
+        <div class="word-text" id="wordText">MILK</div>
+        <div class="word-cover" id="wordCover">
+          <div class="cover-icon">👁️</div>
+          <div class="cover-label">Tap &amp; hold below to reveal</div>
         </div>
+      </div>
+      <button class="got-it-btn" id="gotItBtn">Got it</button>
     </div>
+  </section>
 
-    <script>
-        (function () {
-            "use strict";
+  <!-- HINT START -->
+  <section class="screen" data-screen="hintStart">
+    <div class="topbar">
+      <div></div>
+      <button class="close-btn" data-close aria-label="Close round">✕</button>
+    </div>
+    <div class="hint-wrap">
+      <div class="starter-label">STARTS THE ROUND</div>
+      <div class="starter-badge">Player <span id="starterNum">1</span></div>
+      <h2>Goes first with a hint</h2>
+      <p>Each player says one word or short clue related to their word &mdash; without saying the word itself. Go around one by one.</p>
+      <div class="rules-mini">
+        <b>Remember:</b> one player's word is slightly different. Listen to the clues, guess who sounds off &mdash; then vote!
+      </div>
+    </div>
+    <button class="primary-btn" id="revealSpyBtn">Reveal Spy</button>
+  </section>
 
-            var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  <!-- SPY REVEAL -->
+  <section class="screen" data-screen="spyReveal">
+    <div class="topbar">
+      <div></div>
+      <button class="close-btn" data-close aria-label="Close round">✕</button>
+    </div>
+    <div class="spy-wrap" id="spyWrap">
+      <div class="spy-tag">WAS THE SPY</div>
+      <div class="spy-num" id="spyNum">Player <span id="spyPlayerNum">1</span></div>
+      <p class="spy-sub">Caught them? Here are both words.</p>
+      <div class="word-compare">
+        <div class="word-chip majority">
+          <div class="lab">MAJORITY</div>
+          <div class="val" id="majorityWordDisplay">Milk</div>
+        </div>
+        <div class="word-chip spy">
+          <div class="lab">SPY</div>
+          <div class="val" id="spyWordDisplay">Water</div>
+        </div>
+      </div>
+    </div>
+    <button class="primary-btn" id="playAgainBtn">Play Again</button>
+    <button class="ghost-btn" id="homeBtn">Home</button>
+  </section>
 
-            var wordPairs = [
-                ["Apple", "Orange"], ["Mango", "Papaya"],
-                ["Grapes", "Strawberry"], ["Watermelon", "Muskmelon"],
-                ["Banana", "Plantain"], ["Pineapple", "Coconut"],
-                ["Lemon", "Lime"], ["Pomegranate", "Guava"],
-                ["Kiwi", "Dragon Fruit"], ["Cherry", "Blueberry"],
-                ["Potato", "Sweet Potato"], ["Onion", "Garlic"],
-                ["Tomato", "Capsicum"], ["Carrot", "Radish"],
-                ["Spinach", "Cabbage"], ["Cauliflower", "Broccoli"],
-                ["Peas", "Beans"], ["Cucumber", "Bottle Gourd"],
-                ["Brinjal", "Pumpkin"], ["Corn", "Rice"],
-                ["Wheat", "Barley"], ["Peanut", "Cashew"],
-                ["Almond", "Walnut"], ["Ginger", "Turmeric"],
-                ["Tea", "Coffee"], ["Coke", "Pepsi"],
-                ["Juice", "Smoothie"], ["Milk", "Buttermilk"],
-                ["Lassi", "Milkshake"], ["Water", "Soda"],
-                ["Beer", "Wine"], ["Lemonade", "Iced Tea"],
-                ["Coconut Water", "Sugarcane Juice"], ["Energy Drink", "Sports Drink"],
-                ["India", "Pakistan"], ["USA", "Canada"],
-                ["China", "Japan"], ["France", "Germany"],
-                ["Brazil", "Argentina"], ["Russia", "Ukraine"],
-                ["Australia", "New Zealand"], ["Italy", "Spain"],
-                ["Nepal", "Bhutan"], ["England", "Scotland"],
-                ["Egypt", "Morocco"], ["Mexico", "Colombia"],
-                ["Thailand", "Vietnam"], ["South Korea", "North Korea"],
-                ["Sri Lanka", "Bangladesh"], ["Saudi Arabia", "UAE"],
-                ["Indonesia", "Malaysia"], ["Turkey", "Greece"],
-                ["Portugal", "Spain"], ["Switzerland", "Austria"],
-                ["Sweden", "Norway"], ["Kenya", "Nigeria"],
-                ["Chile", "Peru"], ["Mumbai", "Delhi"],
-                ["Paris", "London"], ["New York", "Los Angeles"],
-                ["Beach", "Lake"], ["Mountain", "Hill"],
-                ["Desert", "Forest"], ["Village", "City"],
-                ["River", "Canal"], ["Temple", "Church"],
-                ["Mosque", "Gurudwara"], ["Airport", "Railway Station"],
-                ["Mall", "Market"], ["Park", "Garden"],
-                ["Museum", "Library"], ["Hospital", "Clinic"],
-                ["School", "College"], ["Stadium", "Auditorium"],
-                ["Bank", "Post Office"], ["Bakery", "Cafe"],
-                ["Zoo", "Aquarium"], ["Hotel", "Resort"],
-                ["Bridge", "Tunnel"], ["Island", "Peninsula"],
-                ["Volcano", "Glacier"], ["Spoon", "Fork"],
-                ["Plate", "Bowl"], ["Cup", "Glass"],
-                ["Pan", "Pot"], ["Knife", "Scissors"],
-                ["Kettle", "Cooker"], ["Fridge", "Freezer"],
-                ["Oven", "Microwave"], ["Mixer", "Blender"],
-                ["Ladle", "Spatula"], ["Tray", "Basket"],
-                ["Jar", "Bottle"], ["Thermos", "Flask"],
-                ["Rolling Pin", "Chopping Board"], ["Sieve", "Strainer"],
-                ["Fan", "AC"], ["Washing Machine", "Dryer"],
-                ["TV", "Radio"], ["Iron", "Steamer"],
-                ["Vacuum Cleaner", "Broom"], ["Heater", "Cooler"],
-                ["Geyser", "Boiler"], ["Bus", "Train"],
-                ["Car", "Jeep"], ["Bicycle", "Motorcycle"],
-                ["Plane", "Helicopter"], ["Ship", "Boat"],
-                ["Metro", "Tram"], ["Rickshaw", "Auto"],
-                ["Truck", "Van"], ["Scooter", "Bike"],
-                ["Taxi", "Cab"], ["Train", "Flight"],
-                ["Submarine", "Yacht"], ["Cricket", "Football"],
-                ["Basketball", "Volleyball"], ["Tennis", "Badminton"],
-                ["Hockey", "Baseball"], ["Boxing", "Wrestling"],
-                ["Swimming", "Diving"], ["Chess", "Carrom"],
-                ["Kabaddi", "Judo"], ["Golf", "Snooker"],
-                ["Skating", "Skiing"], ["Cricket Bat", "Hockey Stick"],
-                ["Marathon", "Cycling Race"], ["Archery", "Shooting"],
-                ["Rugby", "American Football"], ["Guitar", "Piano"],
-                ["Violin", "Cello"], ["Drums", "Tabla"],
-                ["Flute", "Harmonica"], ["Sitar", "Sarod"],
-                ["Trumpet", "Saxophone"], ["Harmonium", "Accordion"],
-                ["Doctor", "Nurse"], ["Teacher", "Professor"],
-                ["Engineer", "Architect"], ["Lawyer", "Judge"],
-                ["Police", "Army"], ["Chef", "Baker"],
-                ["Farmer", "Gardener"], ["Pilot", "Sailor"],
-                ["Actor", "Singer"], ["Painter", "Sculptor"],
-                ["Journalist", "Photographer"], ["Plumber", "Electrician"],
-                ["Barber", "Tailor"], ["Scientist", "Researcher"],
-                ["Shirt", "T-shirt"], ["Pant", "Jeans"],
-                ["Saree", "Salwar"], ["Kurta", "Dhoti"],
-                ["Jacket", "Sweater"], ["Shoes", "Sandals"],
-                ["Cap", "Hat"], ["Tie", "Belt"],
-                ["Skirt", "Dress"], ["Socks", "Gloves"],
-                ["Scarf", "Muffler"], ["Blazer", "Coat"],
-                ["Phone", "Laptop"], ["Tablet", "iPad"],
-                ["Camera", "Video Camera"], ["Keyboard", "Mouse"],
-                ["Headphones", "Speaker"], ["Charger", "Cable"],
-                ["WiFi", "Bluetooth"], ["Printer", "Scanner"],
-                ["Smartwatch", "Fitness Band"], ["Router", "Modem"],
-                ["WhatsApp", "Instagram"], ["Facebook", "Twitter"],
-                ["YouTube", "Netflix"], ["Snapchat", "TikTok"],
-                ["Gmail", "Outlook"], ["Zoom", "Google Meet"],
-                ["Movie", "Web Series"], ["Drama", "Comedy"],
-                ["Concert", "Music Festival"], ["Podcast", "Radio Show"],
-                ["Diwali", "Holi"], ["Christmas", "New Year"],
-                ["Eid", "Ramzan"], ["Navratri", "Dussehra"],
-                ["Raksha Bandhan", "Bhai Dooj"], ["Halloween", "Thanksgiving"],
-                ["Pongal", "Onam"], ["Ganesh Chaturthi", "Durga Puja"],
-                ["Baisakhi", "Lohri"], ["Easter", "Good Friday"],
-                ["Samosa", "Kachori"], ["Pizza", "Burger"],
-                ["Pasta", "Noodles"], ["Dosa", "Idli"],
-                ["Paratha", "Roti"], ["Biryani", "Pulao"],
-                ["Momos", "Spring Roll"], ["Cake", "Pastry"],
-                ["Ice Cream", "Kulfi"], ["Chocolate", "Candy"],
-                ["Chips", "Popcorn"], ["Sandwich", "Wrap"],
-                ["Curry", "Gravy"], ["Naan", "Tandoori Roti"],
-                ["Vada Pav", "Pav Bhaji"], ["Pizza", "Pasta"],
-                ["Chowmein", "Fried Rice"], ["Waffle", "Pancake"],
-                ["Donut", "Muffin"], ["Jalebi", "Gulab Jamun"],
-                ["Butter", "Ghee"], ["Sugar", "Salt"],
-                ["Honey", "Jam"], ["Dog", "Cat"],
-                ["Lion", "Tiger"], ["Elephant", "Rhino"],
-                ["Horse", "Donkey"], ["Cow", "Buffalo"],
-                ["Sheep", "Goat"], ["Monkey", "Chimpanzee"],
-                ["Rabbit", "Squirrel"], ["Snake", "Lizard"],
-                ["Eagle", "Hawk"], ["Parrot", "Sparrow"],
-                ["Fish", "Shark"], ["Whale", "Dolphin"],
-                ["Frog", "Toad"], ["Bee", "Wasp"],
-                ["Butterfly", "Moth"], ["Peacock", "Peahen"],
-                ["Crow", "Pigeon"], ["Duck", "Swan"],
-                ["Camel", "Llama"], ["Deer", "Antelope"],
-                ["Fox", "Wolf"], ["Bear", "Panda"],
-                ["Turtle", "Tortoise"], ["Sun", "Moon"],
-                ["Rain", "Snow"], ["Cloud", "Fog"],
-                ["Storm", "Cyclone"], ["Forest", "Jungle"],
-                ["Desert", "Beach"], ["Fire", "Smoke"],
-                ["Wind", "Breeze"], ["Volcano", "Earthquake"],
-                ["Star", "Planet"], ["Lake", "Pond"],
-                ["Waterfall", "Fountain"], ["Hand", "Leg"],
-                ["Eye", "Ear"], ["Nose", "Mouth"],
-                ["Finger", "Toe"], ["Head", "Neck"],
-                ["Heart", "Lung"], ["Bed", "Sofa"],
-                ["Table", "Chair"], ["Mirror", "Window"],
-                ["Door", "Gate"], ["Curtain", "Carpet"],
-                ["Lamp", "Bulb"], ["Pillow", "Blanket"],
-                ["Wardrobe", "Cupboard"], ["Umbrella", "Raincoat"],
-                ["Bucket", "Mug"], ["Pen", "Pencil"],
-                ["Notebook", "Diary"], ["Eraser", "Sharpener"],
-                ["Bag", "Box"], ["Ruler", "Compass"],
-                ["Chalk", "Marker"], ["Book", "Magazine"],
-                ["Crayon", "Sketch Pen"], ["Stapler", "Punch Machine"],
-                ["Cash", "Card"], ["Wallet", "Purse"],
-                ["Shop", "Mall"], ["Discount", "Sale"],
-                ["Bill", "Receipt"], ["Rupee", "Dollar"],
-                ["Euro", "Pound"], ["Yen", "Yuan"],
-                ["Red", "Pink"], ["Blue", "Green"],
-                ["Black", "Brown"], ["Yellow", "Orange"],
-                ["White", "Grey"], ["Purple", "Violet"],
-                ["Shampoo", "Soap"], ["Toothpaste", "Toothbrush"],
-                ["Perfume", "Deodorant"], ["Comb", "Hairbrush"],
-            ];
+  <div class="watermark">made by karnav</div>
 
-            var screens = {};
-            document.querySelectorAll('.screen').forEach(function (el) {
-                screens[el.getAttribute('data-screen')] = el;
-            });
+</div>
 
-            function showScreen(name) {
-                Object.keys(screens).forEach(function (k) {
-                    screens[k].classList.toggle('active', k === name);
-                });
-            }
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-card">
+    <p>End this round and go home?</p>
+    <div class="confirm-actions">
+      <button class="ghost-btn" id="confirmCancel">Cancel</button>
+      <button class="danger-btn" id="confirmYes">End Round</button>
+    </div>
+  </div>
+</div>
 
-            function renderDots(el, total, currentIdx) {
-                el.innerHTML = '';
-                for (var i = 0; i < total; i++) {
-                    var d = document.createElement('div');
-                    d.className = 'dot' + (i === currentIdx ? ' current' : (i < currentIdx ? ' done' : ''));
-                    el.appendChild(d);
-                }
-            }
+<script>
+(function(){
+  "use strict";
 
-            // ---------- Setup / player count ----------
-            var playerCount = 4;
-            var countEl = document.getElementById('playerCount');
-            function bumpCount() {
-                countEl.classList.remove('bump');
-                void countEl.offsetWidth;
-                countEl.classList.add('bump');
-            }
-            document.getElementById('minusBtn').addEventListener('click', function () {
-                if (playerCount > 3) { playerCount--; countEl.textContent = playerCount; bumpCount(); }
-            });
-            document.getElementById('plusBtn').addEventListener('click', function () {
-                if (playerCount < 10) { playerCount++; countEl.textContent = playerCount; bumpCount(); }
-            });
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            // ---------- Round state ----------
-            var state = null;
+  var wordPairs = [
+    ["Apple","Orange"], ["Mango","Papaya"],
+    ["Grapes","Strawberry"], ["Watermelon","Muskmelon"],
+    ["Banana","Plantain"], ["Pineapple","Coconut"],
+    ["Lemon","Lime"], ["Pomegranate","Guava"],
+    ["Kiwi","Dragon Fruit"], ["Cherry","Blueberry"],
+    ["Potato","Sweet Potato"], ["Onion","Garlic"],
+    ["Tomato","Capsicum"], ["Carrot","Radish"],
+    ["Spinach","Cabbage"], ["Cauliflower","Broccoli"],
+    ["Peas","Beans"], ["Cucumber","Bottle Gourd"],
+    ["Brinjal","Pumpkin"], ["Corn","Rice"],
+    ["Wheat","Barley"], ["Peanut","Cashew"],
+    ["Almond","Walnut"], ["Ginger","Turmeric"],
+    ["Tea","Coffee"], ["Coke","Pepsi"],
+    ["Juice","Smoothie"], ["Milk","Buttermilk"],
+    ["Lassi","Milkshake"], ["Water","Soda"],
+    ["Beer","Wine"], ["Lemonade","Iced Tea"],
+    ["Coconut Water","Sugarcane Juice"], ["Energy Drink","Sports Drink"],
+    ["India","Pakistan"], ["USA","Canada"],
+    ["China","Japan"], ["France","Germany"],
+    ["Brazil","Argentina"], ["Russia","Ukraine"],
+    ["Australia","New Zealand"], ["Italy","Spain"],
+    ["Nepal","Bhutan"], ["England","Scotland"],
+    ["Egypt","Morocco"], ["Mexico","Colombia"],
+    ["Thailand","Vietnam"], ["South Korea","North Korea"],
+    ["Sri Lanka","Bangladesh"], ["Saudi Arabia","UAE"],
+    ["Indonesia","Malaysia"], ["Turkey","Greece"],
+    ["Portugal","Spain"], ["Switzerland","Austria"],
+    ["Sweden","Norway"], ["Kenya","Nigeria"],
+    ["Chile","Peru"], ["Mumbai","Delhi"],
+    ["Paris","London"], ["New York","Los Angeles"],
+    ["Beach","Lake"], ["Mountain","Valley"],
+    ["Desert","Forest"], ["Village","City"],
+    ["River","Canal"], ["Temple","Church"],
+    ["Mosque","Gurudwara"], ["Airport","Railway Station"],
+    ["Mall","Market"], ["Park","Garden"],
+    ["Museum","Library"], ["Hospital","Pharmacy"],
+    ["School","College"], ["Stadium","Auditorium"],
+    ["Bank","Post Office"], ["Bakery","Cafe"],
+    ["Zoo","Aquarium"], ["Hotel","Hostel"],
+    ["Bridge","Tunnel"], ["Island","Peninsula"],
+    ["Volcano","Glacier"], ["Spoon","Fork"],
+    ["Plate","Bowl"], ["Cup","Glass"],
+    ["Pan","Pot"], ["Knife","Scissors"],
+    ["Kettle","Cooker"], ["Fridge","Pantry"],
+    ["Oven","Microwave"], ["Mixer","Juicer"],
+    ["Ladle","Spatula"], ["Tray","Basket"],
+    ["Jar","Bottle"], ["Thermos","Jug"],
+    ["Rolling Pin","Chopping Board"], ["Sieve","Grater"],
+    ["Fan","AC"], ["Washing Machine","Dryer"],
+    ["TV","Radio"], ["Iron","Steamer"],
+    ["Vacuum Cleaner","Broom"], ["Heater","Cooler"],
+    ["Geyser","Immersion Rod"], ["Bus","Train"],
+    ["Car","Tractor"], ["Bicycle","Motorcycle"],
+    ["Plane","Helicopter"], ["Ship","Ferry"],
+    ["Metro","Tram"], ["Cycle Rickshaw","Auto Rickshaw"],
+    ["Truck","Van"], ["Scooter","Bike"],
+    ["Taxi","Shuttle"], ["Train","Flight"],
+    ["Submarine","Yacht"], ["Cricket","Football"],
+    ["Basketball","Volleyball"], ["Tennis","Badminton"],
+    ["Hockey","Baseball"], ["Boxing","Wrestling"],
+    ["Swimming","Diving"], ["Chess","Carrom"],
+    ["Kabaddi","Judo"], ["Golf","Snooker"],
+    ["Skating","Skiing"], ["Cricket Bat","Hockey Stick"],
+    ["Marathon","Cycling Race"], ["Archery","Shooting"],
+    ["Rugby","American Football"], ["Guitar","Piano"],
+    ["Violin","Cello"], ["Drums","Tabla"],
+    ["Flute","Harmonica"], ["Sitar","Sarod"],
+    ["Trumpet","Saxophone"], ["Harmonium","Accordion"],
+    ["Doctor","Nurse"], ["Teacher","Principal"],
+    ["Engineer","Architect"], ["Lawyer","Judge"],
+    ["Police","Army"], ["Chef","Waiter"],
+    ["Farmer","Gardener"], ["Pilot","Sailor"],
+    ["Actor","Singer"], ["Painter","Sculptor"],
+    ["Journalist","Photographer"], ["Plumber","Electrician"],
+    ["Barber","Tailor"], ["Scientist","Mathematician"],
+    ["Shirt","T-shirt"], ["Pant","Shorts"],
+    ["Saree","Salwar"], ["Kurta","Dhoti"],
+    ["Jacket","Sweater"], ["Shoes","Sandals"],
+    ["Cap","Hat"], ["Tie","Belt"],
+    ["Skirt","Dress"], ["Socks","Gloves"],
+    ["Scarf","Beanie"], ["Blazer","Coat"],
+    ["Phone","Laptop"], ["Tablet","E-Reader"],
+    ["Camera","Binoculars"], ["Keyboard","Mouse"],
+    ["Headphones","Speaker"], ["Charger","Power Bank"],
+    ["WiFi","Bluetooth"], ["Printer","Scanner"],
+    ["Smartwatch","Earbuds"], ["Router","Modem"],
+    ["WhatsApp","Instagram"], ["Facebook","Twitter"],
+    ["YouTube","Netflix"], ["Snapchat","TikTok"],
+    ["Gmail","Outlook"], ["Zoom","Google Meet"],
+    ["Movie","Web Series"], ["Drama","Comedy"],
+    ["Concert","Stand-up Show"], ["Podcast","Audiobook"],
+    ["Diwali","Holi"], ["Christmas","New Year"],
+    ["Eid","Muharram"], ["Navratri","Karva Chauth"],
+    ["Raksha Bandhan","Bhai Dooj"], ["Halloween","Thanksgiving"],
+    ["Pongal","Onam"], ["Ganesh Chaturthi","Durga Puja"],
+    ["Baisakhi","Lohri"], ["Easter","Hanukkah"],
+    ["Samosa","Kachori"], ["Pizza","Burger"],
+    ["Pasta","Noodles"], ["Dosa","Idli"],
+    ["Paratha","Roti"], ["Biryani","Pulao"],
+    ["Momos","Spring Roll"], ["Cake","Pastry"],
+    ["Ice Cream","Kulfi"], ["Chocolate","Toffee"],
+    ["Chips","Popcorn"], ["Sandwich","Sushi"],
+    ["Curry","Soup"], ["Naan","Tandoori Roti"],
+    ["Vada Pav","Pav Bhaji"], ["Pizza","Pasta"],
+    ["Chowmein","Fried Rice"], ["Waffle","Pancake"],
+    ["Donut","Muffin"], ["Jalebi","Gulab Jamun"],
+    ["Butter","Ghee"], ["Sugar","Salt"],
+    ["Honey","Jam"], ["Dog","Cat"],
+    ["Lion","Tiger"], ["Elephant","Rhino"],
+    ["Horse","Donkey"], ["Cow","Buffalo"],
+    ["Sheep","Goat"], ["Monkey","Chimpanzee"],
+    ["Rabbit","Squirrel"], ["Snake","Lizard"],
+    ["Eagle","Hawk"], ["Parrot","Sparrow"],
+    ["Fish","Octopus"], ["Whale","Dolphin"],
+    ["Frog","Toad"], ["Bee","Wasp"],
+    ["Butterfly","Moth"], ["Peacock","Ostrich"],
+    ["Crow","Pigeon"], ["Duck","Swan"],
+    ["Camel","Llama"], ["Deer","Antelope"],
+    ["Fox","Wolf"], ["Bear","Koala"],
+    ["Turtle","Tortoise"], ["Sun","Moon"],
+    ["Rain","Snow"], ["Cloud","Fog"],
+    ["Storm","Drought"], ["Jungle","Savannah"],
+    ["Desert","Beach"], ["Fire","Smoke"],
+    ["Thunder","Lightning"], ["Volcano","Earthquake"],
+    ["Star","Planet"], ["Lake","Swamp"],
+    ["Waterfall","Fountain"], ["Hand","Leg"],
+    ["Eye","Ear"], ["Nose","Mouth"],
+    ["Finger","Toe"], ["Head","Neck"],
+    ["Heart","Lung"], ["Bed","Sofa"],
+    ["Table","Chair"], ["Mirror","Window"],
+    ["Door","Gate"], ["Curtain","Carpet"],
+    ["Lamp","Candle"], ["Pillow","Blanket"],
+    ["Wardrobe","Bookshelf"], ["Umbrella","Raincoat"],
+    ["Bucket","Mug"], ["Pen","Pencil"],
+    ["Notebook","Diary"], ["Eraser","Sharpener"],
+    ["Bag","Box"], ["Ruler","Compass"],
+    ["Chalk","Marker"], ["Book","Magazine"],
+    ["Crayon","Sketch Pen"], ["Stapler","Punch Machine"],
+    ["Cash","Card"], ["Wallet","Handbag"],
+    ["Shop","Warehouse"], ["Discount","Coupon"],
+    ["Bill","Warranty Card"], ["Rupee","Dollar"],
+    ["Euro","Pound"], ["Yen","Yuan"],
+    ["Red","Pink"], ["Blue","Green"],
+    ["Black","Brown"], ["Yellow","Orange"],
+    ["White","Grey"], ["Purple","Maroon"],
+    ["Shampoo","Soap"], ["Toothpaste","Toothbrush"],
+    ["Perfume","Deodorant"], ["Comb","Hairbrush"],
+  ];
 
-            function startRound(n) {
-                var pair = wordPairs[Math.floor(Math.random() * wordPairs.length)].slice();
-                if (Math.random() < 0.5) pair.reverse();
-                state = {
-                    n: n,
-                    spyIndex: Math.floor(Math.random() * n),
-                    starter: Math.floor(Math.random() * n),
-                    majorityWord: pair[0],
-                    spyWord: pair[1],
-                    current: 0
-                };
-                showPass();
-            }
+  var screens = {};
+  document.querySelectorAll('.screen').forEach(function(el){
+    screens[el.getAttribute('data-screen')] = el;
+  });
 
-            function showPass() {
-                if (state.current >= state.n) { showHintStart(); return; }
-                var num = state.current + 1;
-                document.getElementById('passPlayerNum').textContent = num;
-                document.getElementById('passPlayerNum2').textContent = num;
-                document.getElementById('passProgress').textContent = 'Player ' + num + ' of ' + state.n;
-                renderDots(document.getElementById('passDots'), state.n, state.current);
-                showScreen('pass');
-            }
+  function showScreen(name){
+    Object.keys(screens).forEach(function(k){
+      screens[k].classList.toggle('active', k === name);
+    });
+  }
 
-            function showReveal() {
-                var num = state.current + 1;
-                var isSpy = state.current === state.spyIndex;
-                document.getElementById('revealPlayerNum').textContent = num;
-                document.getElementById('revealProgress').textContent = 'Player ' + num + ' of ' + state.n;
-                document.getElementById('wordText').textContent = isSpy ? state.spyWord : state.majorityWord;
-                renderDots(document.getElementById('revealDots'), state.n, state.current);
-                resetWordStage();
-                document.getElementById('gotItBtn').classList.remove('visible');
-                showScreen('reveal');
-            }
+  function renderDots(el, total, currentIdx){
+    el.innerHTML = '';
+    for (var i = 0; i < total; i++){
+      var d = document.createElement('div');
+      d.className = 'dot' + (i === currentIdx ? ' current' : (i < currentIdx ? ' done' : ''));
+      el.appendChild(d);
+    }
+  }
 
-            function showHintStart() {
-                document.getElementById('starterNum').textContent = state.starter + 1;
-                showScreen('hintStart');
-            }
+  // ---------- Setup / player count ----------
+  var playerCount = 4;
+  var countEl = document.getElementById('playerCount');
+  function bumpCount(){
+    countEl.classList.remove('bump');
+    void countEl.offsetWidth;
+    countEl.classList.add('bump');
+  }
+  document.getElementById('minusBtn').addEventListener('click', function(){
+    if (playerCount > 3){ playerCount--; countEl.textContent = playerCount; bumpCount(); }
+  });
+  document.getElementById('plusBtn').addEventListener('click', function(){
+    if (playerCount < 10){ playerCount++; countEl.textContent = playerCount; bumpCount(); }
+  });
 
-            function showSpyReveal() {
-                document.getElementById('spyPlayerNum').textContent = state.spyIndex + 1;
-                document.getElementById('majorityWordDisplay').textContent = state.majorityWord;
-                document.getElementById('spyWordDisplay').textContent = state.spyWord;
-                showScreen('spyReveal');
-                triggerSpyDrama();
-            }
+  // ---------- Round state ----------
+  var state = null;
 
-            function goHome() {
-                state = null;
-                showScreen('setup');
-            }
+  function startRound(n){
+    var pair = wordPairs[Math.floor(Math.random() * wordPairs.length)].slice();
+    if (Math.random() < 0.5) pair.reverse();
+    state = {
+      n: n,
+      spyIndex: Math.floor(Math.random() * n),
+      starter: Math.floor(Math.random() * n),
+      majorityWord: pair[0],
+      spyWord: pair[1],
+      current: 0
+    };
+    showPass();
+  }
 
-            // ---------- Events ----------
-            document.getElementById('startBtn').addEventListener('click', function () {
-                startRound(playerCount);
-            });
+  function showPass(){
+    if (state.current >= state.n){ showHintStart(); return; }
+    var num = state.current + 1;
+    document.getElementById('passPlayerNum').textContent = num;
+    document.getElementById('passPlayerNum2').textContent = num;
+    document.getElementById('passProgress').textContent = 'Player ' + num + ' of ' + state.n;
+    renderDots(document.getElementById('passDots'), state.n, state.current);
+    showScreen('pass');
+  }
 
-            document.getElementById('passContinueBtn').addEventListener('click', showReveal);
+  function showReveal(){
+    var num = state.current + 1;
+    var isSpy = state.current === state.spyIndex;
+    document.getElementById('revealPlayerNum').textContent = num;
+    document.getElementById('revealProgress').textContent = 'Player ' + num + ' of ' + state.n;
+    document.getElementById('wordText').textContent = isSpy ? state.spyWord : state.majorityWord;
+    renderDots(document.getElementById('revealDots'), state.n, state.current);
+    resetWordStage();
+    document.getElementById('gotItBtn').classList.remove('visible');
+    showScreen('reveal');
+  }
 
-            document.getElementById('gotItBtn').addEventListener('click', function () {
-                state.current++;
-                showPass();
-            });
+  function showHintStart(){
+    document.getElementById('starterNum').textContent = state.starter + 1;
+    showScreen('hintStart');
+  }
 
-            document.getElementById('revealSpyBtn').addEventListener('click', showSpyReveal);
-            document.getElementById('playAgainBtn').addEventListener('click', function () { startRound(state.n); });
-            document.getElementById('homeBtn').addEventListener('click', goHome);
+  function showSpyReveal(){
+    document.getElementById('spyPlayerNum').textContent = state.spyIndex + 1;
+    document.getElementById('majorityWordDisplay').textContent = state.majorityWord;
+    document.getElementById('spyWordDisplay').textContent = state.spyWord;
+    showScreen('spyReveal');
+    triggerSpyDrama();
+  }
 
-            var confirmOverlay = document.getElementById('confirmOverlay');
-            function openConfirm() { confirmOverlay.classList.add('open'); }
-            function closeConfirm() { confirmOverlay.classList.remove('open'); }
+  function goHome(){
+    state = null;
+    showScreen('setup');
+  }
 
-            document.querySelectorAll('[data-close]').forEach(function (btn) {
-                btn.addEventListener('click', openConfirm);
-            });
-            document.getElementById('confirmCancel').addEventListener('click', closeConfirm);
-            document.getElementById('confirmYes').addEventListener('click', function () {
-                closeConfirm();
-                goHome();
-            });
-            confirmOverlay.addEventListener('click', function (e) {
-                if (e.target === confirmOverlay) closeConfirm();
-            });
+  // ---------- Events ----------
+  document.getElementById('startBtn').addEventListener('click', function(){
+    startRound(playerCount);
+  });
 
-            // ---------- Tap & hold spotlight reveal ----------
-            var stage = document.getElementById('wordStage');
-            var cover = document.getElementById('wordCover');
-            var gotItBtn = document.getElementById('gotItBtn');
-            var rafId = null;
+  document.getElementById('passContinueBtn').addEventListener('click', showReveal);
 
-            function resetWordStage() {
-                stage.classList.remove('revealing');
-                stage.style.setProperty('--r', '0px');
-            }
+  document.getElementById('gotItBtn').addEventListener('click', function(){
+    state.current++;
+    showPass();
+  });
 
-            function animateRadius(from, to, duration, onDone) {
-                if (rafId) cancelAnimationFrame(rafId);
-                if (reduceMotion) { stage.style.setProperty('--r', to + 'px'); if (onDone) onDone(); return; }
-                var start = null;
-                function step(ts) {
-                    if (!start) start = ts;
-                    var t = Math.min(1, (ts - start) / duration);
-                    var eased = 1 - Math.pow(1 - t, 3);
-                    var val = from + (to - from) * eased;
-                    stage.style.setProperty('--r', val + 'px');
-                    if (t < 1) { rafId = requestAnimationFrame(step); }
-                    else if (onDone) { onDone(); }
-                }
-                rafId = requestAnimationFrame(step);
-            }
+  document.getElementById('revealSpyBtn').addEventListener('click', showSpyReveal);
+  document.getElementById('playAgainBtn').addEventListener('click', function(){ startRound(state.n); });
+  document.getElementById('homeBtn').addEventListener('click', goHome);
 
-            function pointerPos(e) {
-                var rect = stage.getBoundingClientRect();
-                var x = (e.clientX - rect.left) / rect.width * 100;
-                var y = (e.clientY - rect.top) / rect.height * 100;
-                return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
-            }
+  var confirmOverlay = document.getElementById('confirmOverlay');
+  function openConfirm(){ confirmOverlay.classList.add('open'); }
+  function closeConfirm(){ confirmOverlay.classList.remove('open'); }
 
-            function reveal(e) {
-                e.preventDefault();
-                var pos = pointerPos(e);
-                stage.style.setProperty('--mx', pos.x + '%');
-                stage.style.setProperty('--my', pos.y + '%');
-                stage.classList.add('revealing');
-                var maxR = Math.hypot(stage.clientWidth, stage.clientHeight) * 0.75;
-                animateRadius(0, maxR, 420);
-            }
+  document.querySelectorAll('[data-close]').forEach(function(btn){
+    btn.addEventListener('click', openConfirm);
+  });
+  document.getElementById('confirmCancel').addEventListener('click', closeConfirm);
+  document.getElementById('confirmYes').addEventListener('click', function(){
+    closeConfirm();
+    goHome();
+  });
+  confirmOverlay.addEventListener('click', function(e){
+    if (e.target === confirmOverlay) closeConfirm();
+  });
 
-            function hide() {
-                if (stage.classList.contains('revealing')) {
-                    gotItBtn.classList.add('visible');
-                }
-                stage.classList.remove('revealing');
-                animateRadius(parseFloat(getComputedStyle(stage).getPropertyValue('--r')) || 0, 0, 260);
-            }
+  // ---------- Tap & hold spotlight reveal ----------
+  var stage = document.getElementById('wordStage');
+  var cover = document.getElementById('wordCover');
+  var gotItBtn = document.getElementById('gotItBtn');
+  var rafId = null;
 
-            stage.addEventListener('pointerdown', reveal);
-            stage.addEventListener('pointerup', hide);
-            stage.addEventListener('pointerleave', hide);
-            stage.addEventListener('pointercancel', hide);
-            stage.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  function resetWordStage(){
+    stage.classList.remove('revealing');
+    stage.style.setProperty('--r', '0px');
+  }
 
-            // ---------- Spy reveal drama ----------
-            function triggerSpyDrama() {
-                var numEl = document.getElementById('spyNum');
-                numEl.classList.remove('stamp');
-                void numEl.offsetWidth;
-                numEl.classList.add('stamp');
+  function animateRadius(from, to, duration, onDone){
+    if (rafId) cancelAnimationFrame(rafId);
+    if (reduceMotion){ stage.style.setProperty('--r', to + 'px'); if (onDone) onDone(); return; }
+    var start = null;
+    function step(ts){
+      if (!start) start = ts;
+      var t = Math.min(1, (ts - start) / duration);
+      var eased = 1 - Math.pow(1 - t, 3);
+      var val = from + (to - from) * eased;
+      stage.style.setProperty('--r', val + 'px');
+      if (t < 1){ rafId = requestAnimationFrame(step); }
+      else if (onDone){ onDone(); }
+    }
+    rafId = requestAnimationFrame(step);
+  }
 
-                if (!reduceMotion) {
-                    var flash = document.getElementById('flash');
-                    flash.classList.remove('go');
-                    void flash.offsetWidth;
-                    flash.classList.add('go');
+  function pointerPos(e){
+    var rect = stage.getBoundingClientRect();
+    var x = (e.clientX - rect.left) / rect.width * 100;
+    var y = (e.clientY - rect.top) / rect.height * 100;
+    return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
+  }
 
-                    var wrap = document.getElementById('spyWrap');
-                    var colors = ['#f2b23a', '#34d399', '#ff4d6d', '#ffd97a'];
-                    for (var i = 0; i < 10; i++) {
-                        (function (i) {
-                            var s = document.createElement('div');
-                            s.className = 'spark';
-                            var angle = (Math.PI * 2 * i) / 10 + Math.random() * 0.4;
-                            var dist = 70 + Math.random() * 60;
-                            s.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
-                            s.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
-                            s.style.background = colors[i % colors.length];
-                            wrap.appendChild(s);
-                            requestAnimationFrame(function () { s.classList.add('go'); });
-                            setTimeout(function () { s.remove(); }, 750);
-                        })(i);
-                    }
-                }
-            }
+  function reveal(e){
+    e.preventDefault();
+    var pos = pointerPos(e);
+    stage.style.setProperty('--mx', pos.x + '%');
+    stage.style.setProperty('--my', pos.y + '%');
+    stage.classList.add('revealing');
+    var maxR = Math.hypot(stage.clientWidth, stage.clientHeight) * 0.75;
+    animateRadius(0, maxR, 420);
+  }
 
-        })();
-    </script>
+  function hide(){
+    if (stage.classList.contains('revealing')){
+      gotItBtn.classList.add('visible');
+    }
+    stage.classList.remove('revealing');
+    animateRadius(parseFloat(getComputedStyle(stage).getPropertyValue('--r')) || 0, 0, 260);
+  }
+
+  stage.addEventListener('pointerdown', reveal);
+  stage.addEventListener('pointerup', hide);
+  stage.addEventListener('pointerleave', hide);
+  stage.addEventListener('pointercancel', hide);
+  stage.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+  // ---------- Spy reveal drama ----------
+  function triggerSpyDrama(){
+    var numEl = document.getElementById('spyNum');
+    numEl.classList.remove('stamp');
+    void numEl.offsetWidth;
+    numEl.classList.add('stamp');
+
+    if (!reduceMotion){
+      var flash = document.getElementById('flash');
+      flash.classList.remove('go');
+      void flash.offsetWidth;
+      flash.classList.add('go');
+
+      var wrap = document.getElementById('spyWrap');
+      var colors = ['#f2b23a', '#34d399', '#ff4d6d', '#ffd97a'];
+      for (var i = 0; i < 10; i++){
+        (function(i){
+          var s = document.createElement('div');
+          s.className = 'spark';
+          var angle = (Math.PI * 2 * i) / 10 + Math.random() * 0.4;
+          var dist = 70 + Math.random() * 60;
+          s.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+          s.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+          s.style.background = colors[i % colors.length];
+          wrap.appendChild(s);
+          requestAnimationFrame(function(){ s.classList.add('go'); });
+          setTimeout(function(){ s.remove(); }, 750);
+        })(i);
+      }
+    }
+  }
+
+})();
+</script>
 </body>
-
 </html>
